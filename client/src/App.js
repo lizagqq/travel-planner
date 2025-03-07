@@ -11,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/routes" element={<RoutesPage />} />
+        <Route path="/add-route" element={<AddRoutePage />} />  {/* Новый маршрут */}
       </Routes>
     </Router>
   );

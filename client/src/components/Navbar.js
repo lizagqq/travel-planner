@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "./Navbar.css";  // Для стилизации
+import "./Navbar.css";
 
 const Navbar = () => {
   return (
@@ -11,6 +11,9 @@ const Navbar = () => {
         </li>
         <li>
           <Link to="/routes">Мои маршруты</Link>
+        </li>
+        <li>
+          <Link to="/add-route">Добавить маршрут</Link> {/* Новая ссылка */}
         </li>
       </ul>
     </nav>
