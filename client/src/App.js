@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import RoutesPage from "./pages/RoutesPage";
 import Navbar from "./components/Navbar"; // Импортируем Navbar
 import AddRoutePage from './pages/AddRoutePage';
+import LoginPage from './pages/LoginPage';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/add-route" element={<AddRoutePage />} />  {/* Новый маршрут */}
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </Router>
   );
