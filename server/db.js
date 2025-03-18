@@ -8,4 +8,5 @@ const pool = new Pool({
     port: 5432,             // Порт подключения (по умолчанию 5432)
 });
 
+
 module.exports = pool;
