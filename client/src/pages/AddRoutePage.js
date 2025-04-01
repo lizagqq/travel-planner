@@ -1,183 +1,202 @@
-import React, { useState } from "react";
-import MapComponent from "../components/MapComponent";
+import React, { useState } from 'react';
+import './AddRoutePage.css';
 
-const AddRoutePage = () => {
-  const [routeName, setRouteName] = useState("");
-  const [description, setDescription] = useState("");
-  const [routePoints, setRoutePoints] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+function App() {
+    const [trip, setTrip] = useState({
+        title: '',
+        startDate: '',
+        endDate: '',
+        budget: '',
+        destinations: []
+    });
+    const [editingIndex, setEditingIndex] = useState(null); // Индекс редактируемого пункта
+    const [destinationForm, setDestinationForm] = useState({
+        name: '',
+        date: '',
+        notes: '',
+        cost: ''
+    });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!routeName || routePoints.length === 0) {
-      setError("Название маршрута и точки маршрута обязательны");
-      return;
-    }
-
-    setIsSubmitting(true);
-    const routeData = {
-      name: routeName,
-      description,
-      points: routePoints,
+    // Обработчик изменения общей формы поездки
+    const handleTripChange = (e) => {
+        const { name, value } = e.target;
+        setTrip({
+            ...trip,
+            [name]: name === 'budget' ? value : value
+        });
     };
 
-    try {
-      const response = await fetch("http://localhost:5000/api/routes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(routeData),
-      });
+    // Обработчик отправки общей формы поездки
+    const handleTripSubmit = (e) => {
+        e.preventDefault();
+        const budget = parseFloat(trip.budget) || 0;
+        if (trip.title && trip.startDate && trip.endDate && trip.budget) {
+            setTrip({ ...trip, budget });
+            alert('Поездка сохранена!');
+        } else {
+            alert('Заполните все поля о поездке!');
+        }
+    };
 
-      if (response.ok) {
-        alert("Маршрут успешно добавлен!");
-        setRouteName("");
-        setDescription("");
-        setRoutePoints([]);
-      } else {
-        throw new Error("Ошибка при добавлении маршрута");
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Обработчик изменения формы пункта назначения
+    const handleDestinationChange = (e) => {
+        const { name, value } = e.target;
+        setDestinationForm({
+            ...destinationForm,
+            [name]: name === 'cost' ? value : value
+        });
+    };
 
-  return (
-    <div style={styles.container}>
-      {/* Форма для добавления маршрута */}
-      <div style={styles.formContainer}>
-        <h2 style={styles.title}>Добавить маршрут</h2>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label htmlFor="routeName" style={styles.label}>
-              Название маршрута:
-            </label>
-            <input
-              id="routeName"
-              type="text"
-              placeholder="Введите название маршрута"
-              value={routeName}
-              onChange={(e) => setRouteName(e.target.value)}
-              style={styles.input}
-              required
-            />
-          </div>
-          <div style={styles.inputGroup}>
-            <label htmlFor="description" style={styles.label}>
-              Описание маршрута:
-            </label>
-            <textarea
-              id="description"
-              placeholder="Введите описание маршрута"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={styles.textarea}
-            />
-          </div>
-          {error && <p style={styles.errorText}>{error}</p>}
-          <button type="submit" style={styles.submitButton} disabled={isSubmitting}>
-            {isSubmitting ? "Отправка..." : "Сохранить маршрут"}
-          </button>
-        </form>
-      </div>
+    // Обработчик добавления или редактирования пункта назначения
+    const handleDestinationSubmit = (e) => {
+        e.preventDefault();
+        const { name, date, notes, cost } = destinationForm;
+        const parsedCost = parseFloat(cost) || 0;
 
-      {/* Карта */}
-      <div style={styles.mapContainer}>
-        <MapComponent
-          onAddPoint={(point) => setRoutePoints([...routePoints, point])}
-          onRemovePoint={(id) =>
-            setRoutePoints(routePoints.filter((point) => point.id !== id))
-          }
-        />
-      </div>
-    </div>
-  );
-};
+        if (trip.title === '') {
+            alert('Сначала заполните данные о поездке!');
+            return;
+        }
 
-// Стили для улучшенного дизайна
-const styles = {
-  container: {
-    display: "flex",
-    height: "100vh", // Задаём высоту 100vh для всего контейнера
-    flexDirection: "row", // Размещение элементов горизонтально (форма слева, карта справа)
-  },
-  formContainer: {
-    width: "350px", // Ширина формы
-    backgroundColor: "rgba(255, 255, 255, 0.9)", // Прозрачный белый фон
-    padding: "30px",
-    boxShadow: "2px 5px 10px rgba(0, 0, 0, 0.2)", // Тень для формы
-    zIndex: 1,
-    display: "flex",
-    flexDirection: "column",
-    borderRadius: "15px",
-    marginRight: "20px", // Отступ от карты
-  },
-  title: {
-    textAlign: "center",
-    fontSize: "24px",
-    marginBottom: "20px",
-    color: "#333",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px",
-  },
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  label: {
-    fontSize: "14px",
-    marginBottom: "5px",
-    color: "#333",
-  },
-  input: {
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    fontSize: "14px",
-    outline: "none",
-    transition: "0.3s",
-  },
-  textarea: {
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    fontSize: "14px",
-    minHeight: "100px",
-    outline: "none",
-    transition: "0.3s",
-  },
-  errorText: {
-    color: "red",
-    fontSize: "14px",
-    marginTop: "-10px",
-  },
-  submitButton: {
-    backgroundColor: "#4CAF50",
-    color: "white",
-    padding: "10px 20px",
-    fontSize: "16px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "background-color 0.3s",
-    ":hover": {
-      backgroundColor: "#45a049",
-    },
-    ":disabled": {
-      backgroundColor: "#ccc",
-    },
-  },
-  mapContainer: {
-    flex: 1,
-    height: "100vh", // Высота карты на весь экран
-    width: "calc(100% - 370px)", // Убираем ширину формы, чтобы карта занимала оставшееся пространство
-    position: "relative",
-  },
-};
+        if (name && date) {
+            if (editingIndex !== null) {
+                // Редактирование существующего пункта
+                const updatedDestinations = trip.destinations.map((dest, index) =>
+                    index === editingIndex ? { name, date, notes, cost: parsedCost } : dest
+                );
+                setTrip({ ...trip, destinations: updatedDestinations });
+                setEditingIndex(null);
+                alert('Пункт назначения обновлен!');
+            } else {
+                // Добавление нового пункта
+                setTrip({
+                    ...trip,
+                    destinations: [...trip.destinations, { name, date, notes, cost: parsedCost }]
+                });
+                alert('Пункт назначения добавлен!');
+            }
+            setDestinationForm({ name: '', date: '', notes: '', cost: '' });
+        } else {
+            alert('Укажите название и дату!');
+        }
+    };
 
-export default AddRoutePage;
+    // Редактирование пункта
+    const editDestination = (index) => {
+        setEditingIndex(index);
+        setDestinationForm(trip.destinations[index]);
+    };
+
+    // Удаление пункта
+    const deleteDestination = (index) => {
+        const updatedDestinations = trip.destinations.filter((_, i) => i !== index);
+        setTrip({ ...trip, destinations: updatedDestinations });
+        if (editingIndex === index) {
+            setEditingIndex(null);
+            setDestinationForm({ name: '', date: '', notes: '', cost: '' });
+        }
+        alert('Пункт назначения удален!');
+    };
+
+    // Подсчет бюджета
+    const totalCost = trip.destinations.reduce((sum, dest) => sum + dest.cost, 0);
+    const parsedBudget = parseFloat(trip.budget) || 0;
+    const remainingBudget = (parsedBudget - totalCost).toFixed(2);
+
+    return (
+        <div className="container">
+            <h1>Планирование путешествия</h1>
+
+            {/* Форма для общих данных поездки */}
+            <div className="trip-form">
+                <h2>Общие данные поездки</h2>
+                <form onSubmit={handleTripSubmit}>
+                    <input
+                        type="text"
+                        name="title"
+                        placeholder="Название поездки (например, Отпуск в Италии)"
+                        value={trip.title}
+                        onChange={handleTripChange}
+                    />
+                    <input
+                        type="date"
+                        name="startDate"
+                        value={trip.startDate}
+                        onChange={handleTripChange}
+                    />
+                    <input
+                        type="date"
+                        name="endDate"
+                        value={trip.endDate}
+                        onChange={handleTripChange}
+                    />
+                    <input
+                        type="number"
+                        name="budget"
+                        placeholder="Бюджет (в евро)"
+                        value={trip.budget}
+                        onChange={handleTripChange}
+                    />
+                    <button type="submit">Сохранить поездку</button>
+                </form>
+            </div>
+
+            {/* Форма для добавления/редактирования пункта назначения */}
+            <div className="destination-form">
+                <h2>{editingIndex !== null ? 'Редактировать пункт назначения' : 'Добавить пункт назначения'}</h2>
+                <form onSubmit={handleDestinationSubmit}>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Название (например, Рим)"
+                        value={destinationForm.name}
+                        onChange={handleDestinationChange}
+                    />
+                    <input
+                        type="date"
+                        name="date"
+                        value={destinationForm.date}
+                        onChange={handleDestinationChange}
+                    />
+                    <input
+                        type="text"
+                        name="notes"
+                        placeholder="Заметки (например, посетить Колизей)"
+                        value={destinationForm.notes}
+                        onChange={handleDestinationChange}
+                    />
+                    <input
+                        type="number"
+                        name="cost"
+                        placeholder="Стоимость (в евро)"
+                        value={destinationForm.cost}
+                        onChange={handleDestinationChange}
+                    />
+                    <button type="submit">{editingIndex !== null ? 'Сохранить' : 'Добавить'}</button>
+                </form>
+            </div>
+
+            {/* Детали поездки */}
+            <div className="trip-details">
+                <h2>Ваша поездка: <span>{trip.title || 'Не выбрано'}</span></h2>
+                <p>Даты: <span>{trip.startDate && trip.endDate ? `${trip.startDate} - ${trip.endDate}` : '-'}</span></p>
+                <p>Бюджет: <span>{parsedBudget}</span> евро (Остаток: <span>{remainingBudget}</span> евро)</p>
+                <p>Общие затраты: <span>{totalCost}</span> евро</p>
+                <h3>Пункты назначения:</h3>
+                <ul className="destination-list">
+                    {trip.destinations.map((dest, index) => (
+                        <li key={index}>
+                            {dest.name} ({dest.date}) - {dest.notes || 'Нет заметок'} - {dest.cost} евро
+                            <div>
+                                <button onClick={() => editDestination(index)}>Редактировать</button>
+                                <button onClick={() => deleteDestination(index)}>Удалить</button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+}
+
+export default App;
