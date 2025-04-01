@@ -1,5 +1,3 @@
-// routes/authRoutes.js 
-
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -22,7 +20,7 @@ router.post("/login", async (req, res) => {
         }
 
         // Проверяем пароль
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash); // Используем password_hash
         if (!isPasswordValid) {
             return res.status(401).json({ error: "Неверный пароль" });
         }
@@ -53,7 +51,7 @@ router.post("/register", async (req, res) => {
 
         // Сохраняем пользователя в базе данных
         await pool.query(
-            "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+            "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)", // Используем password_hash
             [username, email, hashedPassword]
         );
 
