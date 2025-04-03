@@ -31,17 +31,19 @@ const AddRoutePage = () => {
             alert('Заполните все поля о поездке!');
             return;
         }
-
+    
         if (trip.destinations.length === 0) {
             alert('Добавьте хотя бы один пункт назначения!');
             return;
         }
-
+    
         try {
+            const token = localStorage.getItem("token"); // Получаем токен из localStorage
             const response = await fetch("http://localhost:5000/api/trips", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Добавляем заголовок Authorization
                 },
                 body: JSON.stringify({
                     title: trip.title,
@@ -51,7 +53,7 @@ const AddRoutePage = () => {
                     destinations: trip.destinations
                 })
             });
-
+    
             if (response.ok) {
                 alert("Поездка успешно сохранена!");
                 setTrip({
@@ -62,10 +64,12 @@ const AddRoutePage = () => {
                     destinations: []
                 });
             } else {
-                alert("Ошибка при сохранении поездки.");
+                const errorData = await response.json();
+                alert(errorData.error || "Ошибка при сохранении поездки.");
             }
         } catch (error) {
             console.error("Ошибка при сохранении поездки:", error);
+            alert("Ошибка сервера");
         }
     };
 

@@ -6,23 +6,38 @@ const RoutesPage = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/trips")
-            .then(response => response.json())
-            .then(data => {
+        const fetchTrips = async () => {
+            try {
+                const token = localStorage.getItem("token"); // Получаем токен из localStorage
+                const response = await fetch("http://localhost:5000/api/trips", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}` // Добавляем заголовок Authorization
+                    }
+                });
+    
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || "Ошибка загрузки данных");
+                }
+    
                 console.log("Полученные данные:", data); // Лог для отладки
                 if (Array.isArray(data)) {
                     setTrips(data);
                 } else {
                     setError("Некорректный формат данных от сервера");
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error("Ошибка загрузки маршрутов:", error);
-                setError("Ошибка загрузки данных");
-            })
-            .finally(() => setLoading(false));
+                setError(error.message || "Ошибка загрузки данных");
+            } finally {
+                setLoading(false);
+            }
+        };
+    
+        fetchTrips();
     }, []);
-
+    
     if (loading) return <p>Загрузка...</p>;
     if (error) return <p style={{ color: "red" }}>{error}</p>;
 
