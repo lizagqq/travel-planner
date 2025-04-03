@@ -14,8 +14,10 @@ const Navbar = () => {
         </li>
         <li>
           <Link to="/add-route">Добавить маршрут</Link> {/* Новая ссылка */}
-          <li><Link to="/login">Авторизация</Link></li> {/* Ссылка на страницу логина */}
         </li>
+        <li><Link to="/profile">Личный кабинет</Link></li>
+        <li> <Link to="/login">Авторизация</Link></li> {/* Ссылка на страницу логина */}
+
       </ul>
     </nav>
   );

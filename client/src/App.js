@@ -5,6 +5,7 @@ import RoutesPage from "./pages/RoutesPage";
 import Navbar from "./components/Navbar"; // Импортируем Navbar
 import AddRoutePage from './pages/AddRoutePage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/add-route" element={<AddRoutePage />} />  {/* Новый маршрут */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </Router>
   );

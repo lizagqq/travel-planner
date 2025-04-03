@@ -1,3 +1,6 @@
+// controllers/tripController.js
+const pool = require("../db");
+
 const addTrip = async (req, res) => {
     const { title, start_date, end_date, budget, destinations } = req.body;
     const user_id = req.user.id;
@@ -38,3 +41,6 @@ const getUserTrips = async (req, res) => {
         res.status(500).json({ error: "Ошибка при получении путешествий" });
     }
 };
+
+// Экспортируем функции
+module.exports = { addTrip, getUserTrips };

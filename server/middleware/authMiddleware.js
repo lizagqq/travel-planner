@@ -1,19 +1,19 @@
 const jwt = require("jsonwebtoken");
-const pool = require("../db");
 
-const authMiddleware = async (req, res, next) => {
-    const token = req.headers.authorization && req.headers.authorization.split(" ")[1];
+const authMiddleware = (req, res, next) => {
+    const token = req.header("Authorization")?.split(" ")[1];
 
-    if (!token) return res.status(401).json({ message: "Нет авторизации" });
+    if (!token) {
+        return res.status(401).json({ error: "Нет токена, доступ запрещен" });
+    }
 
     try {
-        const decoded = jwt.verify(token, "secretkey"); // Используем тот же ключ, что и для создания токена
-        req.user = decoded; // Добавляем информацию о пользователе в запрос
-        next(); // Переходим к следующему middleware или маршруту
+        const decoded = jwt.verify(token, "your_secret_key"); // Явный ключ, как в authRoutes.js
+        req.user = decoded;
+        next();
     } catch (error) {
-        console.error("Ошибка при проверке токена:", error);
-        res.status(401).json({ message: "Неверный или просроченный токен" });
+        res.status(401).json({ error: "Неверный токен" });
     }
 };
 
-module.exports = { authMiddleware };
+module.exports = authMiddleware; // Прямой экспорт функции
