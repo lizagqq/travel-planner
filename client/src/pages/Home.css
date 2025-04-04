@@ -1,0 +1,80 @@
+.home {
+    padding-bottom: 50px;
+}
+
+.hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+        url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80");
+    background-size: cover;
+    background-position: center;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #ffffff;
+}
+
+.hero-title {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.hero-subtitle {
+    font-size: 20px;
+    margin-bottom: 30px;
+}
+
+.hero-btn {
+    font-size: 18px;
+    padding: 12px 30px;
+}
+
+.section-title {
+    font-size: 32px;
+    text-align: center;
+    margin: 50px 0 30px;
+    color: #4a90e2;
+}
+
+.trip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.trip-card {
+    padding: 20px;
+}
+
+.trip-title {
+    font-size: 24px;
+    color: #4a90e2;
+    margin-bottom: 10px;
+}
+
+.trip-dates,
+.trip-budget {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.trip-destinations {
+    margin-top: 15px;
+}
+
+.trip-destinations ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.trip-destinations li {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #666;
+}
+
+.no-trips {
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+}

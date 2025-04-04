@@ -1,90 +1,74 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSignOutAlt, FaUser } from "react-icons/fa";
+import { toast } from "react-toastify";
+import "./Navbar.css";
 
 const Navbar = () => {
-    const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const [username, setUsername] = useState("");
+    const [isAdmin, setIsAdmin] = useState(false);
     const token = localStorage.getItem("token");
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchUser = async () => {
-            if (token) {
-                try {
-                    const response = await fetch("http://localhost:5000/api/profile", {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    if (response.ok) {
-                        const userData = await response.json();
-                        setUser(userData);
-                    }
-                } catch (error) {
-                    console.error("Ошибка при загрузке данных пользователя:", error);
-                }
-            }
-        };
-        fetchUser();
+        if (token) {
+            fetch("http://localhost:5000/api/profile", {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    setUsername(data.username);
+                    setIsAdmin(data.role === "admin");
+                })
+                .catch((error) => {
+                    console.error("Ошибка загрузки профиля:", error);
+                    localStorage.removeItem("token");
+                });
+        }
     }, [token]);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
-        setUser(null);
-        navigate("/login");
+        setUsername("");
+        setIsAdmin(false);
+        toast.success("Вы вышли из системы");
+        navigate("/");
     };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-            <div className="container">
-                <Link className="navbar-brand fw-bold" to="/">Travel Planner</Link>
-                <button
-                    className="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                    aria-controls="navbarNav"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation"
-                >
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-                <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav ms-auto align-items-center">
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/">Главная</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/routes">Маршруты</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/add-route">Добавить маршрут</Link>
-                        </li>
-                        {token && user ? (
-                            <>
-                                {user.role === "admin" && (
-                                    <li className="nav-item">
-                                        <Link className="nav-link" to="/admin">Панель администратора</Link>
-                                    </li>
-                                )}
-                                <li className="nav-item">
-                                    <Link className="nav-link d-flex align-items-center" to="/profile">
-                                        <FaUser className="me-1" /> Привет, {user.username}!
-                                    </Link>
-                                </li>
-                                <li className="nav-item">
-                                    <button
-                                        className="btn btn-outline-danger btn-sm d-flex align-items-center"
-                                        onClick={handleLogout}
-                                    >
-                                        <FaSignOutAlt className="me-1" /> Выйти
-                                    </button>
-                                </li>
-                            </>
-                        ) : (
-                            <li className="nav-item">
-                                <Link className="nav-link" to="/login">Войти</Link>
-                            </li>
-                        )}
-                    </ul>
+        <nav className="navbar">
+            <div className="container navbar-container">
+                <Link to="/" className="navbar-brand">
+                    Travel Planner
+                </Link>
+                <div className="navbar-links">
+                    <Link to="/" className="navbar-link">
+                        Главная
+                    </Link>
+                    {token ? (
+                        <>
+                            <Link to="/routes" className="navbar-link">
+                                Мои маршруты
+                            </Link>
+                            <Link to="/add-route" className="navbar-link">
+                                Создать маршрут
+                            </Link>
+                            {isAdmin && (
+                                <Link to="/admin" className="navbar-link">
+                                    Панель администратора
+                                </Link>
+                            )}
+                            <Link to="/profile" className="navbar-link">
+                                Привет, {username}!
+                            </Link>
+                            <button onClick={handleLogout} className="navbar-btn">
+                                Выйти
+                            </button>
+                        </>
+                    ) : (
+                        <Link to="/login" className="navbar-link">
+                            Войти
+                        </Link>
+                    )}
                 </div>
             </div>
         </nav>

@@ -1,14 +1,13 @@
 import React from "react";
-import { Navigate } from "react-router-dom"; // Используем Navigate вместо Redirect
+import { Navigate, Outlet } from "react-router-dom";
 
-const PrivateRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem("token"); // Проверка на авторизацию (например, наличие токена)
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />; // Перенаправление на страницу логина
-  }
-
-  return children; // Если пользователь авторизован, возвращаем дочерние компоненты
+const PrivateRoute = () => {
+    const token = localStorage.getItem("token");
+    console.log("PrivateRoute: token =", token); // Отладка
+    if (!token) {
+        console.log("PrivateRoute: Перенаправляем на /login"); // Отладка
+    }
+    return token ? <Outlet /> : <Navigate to="/login" state={{ from: window.location.pathname }} />;
 };
 
 export default PrivateRoute;

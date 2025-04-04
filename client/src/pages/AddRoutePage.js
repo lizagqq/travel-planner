@@ -1,175 +1,456 @@
-import React, { useState } from 'react';
-import './AddRoutePage.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "./AddRoutePage.css";
+
+// Функция для форматирования даты и времени из ISO 8601 в читаемый формат
+const formatDateTime = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    return date.toLocaleString("ru-RU", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).replace(",", "");
+};
+
+// Функция для извлечения даты (YYYY-MM-DD) из ISO 8601
+const extractDate = (isoString) => {
+    if (!isoString) return "";
+    return isoString.split("T")[0];
+};
+
+// Функция для извлечения времени (HH:mm) из ISO 8601
+const extractTime = (isoString) => {
+    if (!isoString) return "";
+    const timePart = isoString.split("T")[1];
+    return timePart ? timePart.slice(0, 5) : "";
+};
+
+// Функция для преобразования даты и времени из полей ввода в ISO 8601
+const toISOString = (date, time) => {
+    if (!date) return "";
+    const dateTime = time ? `${date}T${time}:00.000Z` : `${date}T00:00:00.000Z`;
+    return new Date(dateTime).toISOString();
+};
 
 const AddRoutePage = () => {
-    const [trip, setTrip] = useState({
-        title: '',
-        startDate: '',
-        endDate: '',
-        budget: '',
-        destinations: []
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        title: "",
+        start_date: "",
+        end_date: "",
+        budget: "",
+        destinations: [],
     });
-    const [editingIndex, setEditingIndex] = useState(null);
-    const [destinationForm, setDestinationForm] = useState({
-        name: '',
-        date: '',
-        notes: '',
-        cost: ''
+    const [newDestination, setNewDestination] = useState({
+        name: "",
+        date: "",
+        time: "",
+        cost: "",
+        notes: "",
+        category: "Транспорт",
     });
+    const [editingDestinationIndex, setEditingDestinationIndex] = useState(null);
+    const [editingDestination, setEditingDestination] = useState(null);
+    const token = localStorage.getItem("token");
 
-    const handleTripChange = (e) => {
-        const { name, value } = e.target;
-        setTrip({
-            ...trip,
-            [name]: value
+    useEffect(() => {
+        if (!token) {
+            navigate("/login", { state: { from: "/add-route" } });
+        }
+    }, [token, navigate]);
+
+    // Подсчет общей стоимости
+    const totalCost = formData.destinations.reduce((sum, dest) => sum + Number(dest.cost), 0);
+    const budget = Number(formData.budget);
+    const isOverBudget = totalCost > budget && budget > 0;
+
+    const handleAddDestination = () => {
+        if (!newDestination.name || !newDestination.date || !newDestination.time || !newDestination.cost || !newDestination.category) {
+            toast.error("Заполните все обязательные поля пункта назначения");
+            return;
+        }
+
+        const newTotalCost = totalCost + Number(newDestination.cost);
+        if (newTotalCost > budget && budget > 0) {
+            toast.warning(
+                `Добавление этого пункта назначения превысит бюджет! Текущая сумма: ${newTotalCost} руб., бюджет: ${budget} руб.`
+            );
+        }
+
+        const isoDateTime = toISOString(newDestination.date, newDestination.time);
+
+        setFormData({
+            ...formData,
+            destinations: [
+                ...formData.destinations,
+                {
+                    ...newDestination,
+                    date: isoDateTime,
+                },
+            ],
+        });
+        setNewDestination({ name: "", date: "", time: "", cost: "", notes: "", category: "Транспорт" });
+    };
+
+    const handleRemoveDestination = (index) => {
+        setFormData({
+            ...formData,
+            destinations: formData.destinations.filter((_, i) => i !== index),
+        });
+        if (editingDestinationIndex === index) {
+            setEditingDestinationIndex(null);
+            setEditingDestination(null);
+        }
+    };
+
+    const handleEditDestination = (index) => {
+        const dest = formData.destinations[index];
+        setEditingDestinationIndex(index);
+        setEditingDestination({
+            ...dest,
+            date: extractDate(dest.date),
+            time: extractTime(dest.date),
         });
     };
 
-    const handleTripSubmit = async (e) => {
+    const handleUpdateDestination = () => {
+        if (
+            !editingDestination.name ||
+            !editingDestination.date ||
+            !editingDestination.time ||
+            !editingDestination.cost ||
+            !editingDestination.category
+        ) {
+            toast.error("Заполните все обязательные поля пункта назначения");
+            return;
+        }
+
+        const updatedDestinations = [...formData.destinations];
+        const oldCost = Number(updatedDestinations[editingDestinationIndex].cost);
+        const newCost = Number(editingDestination.cost);
+        const newTotalCost = totalCost - oldCost + newCost;
+        if (newTotalCost > budget && budget > 0) {
+            toast.warning(
+                `Обновление этого пункта назначения превысит бюджет! Текущая сумма: ${newTotalCost} руб., бюджет: ${budget} руб.`
+            );
+        }
+
+        const isoDateTime = toISOString(editingDestination.date, editingDestination.time);
+
+        updatedDestinations[editingDestinationIndex] = {
+            ...editingDestination,
+            date: isoDateTime,
+        };
+
+        setFormData({
+            ...formData,
+            destinations: updatedDestinations,
+        });
+        setEditingDestinationIndex(null);
+        setEditingDestination(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingDestinationIndex(null);
+        setEditingDestination(null);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!trip.title || !trip.startDate || !trip.endDate || !trip.budget) {
-            alert('Заполните все поля о поездке!');
+        if (!formData.title || !formData.start_date || !formData.end_date || !formData.budget) {
+            toast.error("Заполните все поля маршрута");
             return;
         }
-    
-        if (trip.destinations.length === 0) {
-            alert('Добавьте хотя бы один пункт назначения!');
+        if (formData.destinations.length === 0) {
+            toast.error("Добавьте хотя бы один пункт назначения");
             return;
         }
-    
+
+        if (isOverBudget) {
+            toast.warning(`Общая стоимость (${totalCost} руб.) превышает бюджет (${budget} руб.)!`);
+        }
+
         try {
-            const token = localStorage.getItem("token"); // Получаем токен из localStorage
             const response = await fetch("http://localhost:5000/api/trips", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` // Добавляем заголовок Authorization
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({
-                    title: trip.title,
-                    start_date: trip.startDate,
-                    end_date: trip.endDate,
-                    budget: parseFloat(trip.budget),
-                    destinations: trip.destinations
-                })
+                body: JSON.stringify(formData),
             });
-    
+
             if (response.ok) {
-                alert("Поездка успешно сохранена!");
-                setTrip({
-                    title: '',
-                    startDate: '',
-                    endDate: '',
-                    budget: '',
-                    destinations: []
-                });
+                toast.success("Маршрут успешно добавлен!");
+                navigate("/routes");
             } else {
                 const errorData = await response.json();
-                alert(errorData.error || "Ошибка при сохранении поездки.");
+                toast.error(errorData.error || "Ошибка при добавлении маршрута");
             }
         } catch (error) {
-            console.error("Ошибка при сохранении поездки:", error);
-            alert("Ошибка сервера");
+            toast.error("Ошибка сервера");
         }
     };
-
-    const handleDestinationChange = (e) => {
-        const { name, value } = e.target;
-        setDestinationForm({
-            ...destinationForm,
-            [name]: value
-        });
-    };
-
-    const handleDestinationSubmit = (e) => {
-        e.preventDefault();
-        const { name, date, notes, cost } = destinationForm;
-
-        if (!name || !date) {
-            alert('Укажите название и дату!');
-            return;
-        }
-
-        const newDestination = { name, date, notes, cost: parseFloat(cost) || 0 };
-
-        if (editingIndex !== null) {
-            const updatedDestinations = [...trip.destinations];
-            updatedDestinations[editingIndex] = newDestination;
-            setTrip({ ...trip, destinations: updatedDestinations });
-            setEditingIndex(null);
-        } else {
-            setTrip({
-                ...trip,
-                destinations: [...trip.destinations, newDestination]
-            });
-        }
-
-        setDestinationForm({ name: '', date: '', notes: '', cost: '' });
-    };
-
-    const editDestination = (index) => {
-        setEditingIndex(index);
-        setDestinationForm(trip.destinations[index]);
-    };
-
-    const deleteDestination = (index) => {
-        const updatedDestinations = trip.destinations.filter((_, i) => i !== index);
-        setTrip({ ...trip, destinations: updatedDestinations });
-        setEditingIndex(null);
-        setDestinationForm({ name: '', date: '', notes: '', cost: '' });
-    };
-
-    const totalCost = trip.destinations.reduce((sum, dest) => sum + dest.cost, 0);
-    const parsedBudget = parseFloat(trip.budget) || 0;
-    const remainingBudget = (parsedBudget - totalCost).toFixed(2);
 
     return (
-        <div className="container">
-            <h1>Планирование путешествия</h1>
+        <div className="add-route-page">
+            <div className="container">
+                <h1 className="page-title fade-in">Добавить новый маршрут</h1>
+                <form onSubmit={handleSubmit} className="add-route-form card fade-in">
+                    <div className="form-group">
+                        <label className="form-label">Название маршрута:</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Дата и время начала:</label>
+                        <input
+                            type="datetime-local"
+                            className="form-control"
+                            value={formData.start_date ? formData.start_date.slice(0, 16) : ""}
+                            onChange={(e) => setFormData({ ...formData, start_date: new Date(e.target.value).toISOString() })}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Дата и время окончания:</label>
+                        <input
+                            type="datetime-local"
+                            className="form-control"
+                            value={formData.end_date ? formData.end_date.slice(0, 16) : ""}
+                            onChange={(e) => setFormData({ ...formData, end_date: new Date(e.target.value).toISOString() })}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Бюджет (руб.):</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            value={formData.budget}
+                            onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                            required
+                        />
+                    </div>
 
-            <div className="trip-form">
-                <h2>Общие данные поездки</h2>
-                <form onSubmit={handleTripSubmit}>
-                    <input type="text" name="title" placeholder="Название поездки" value={trip.title} onChange={handleTripChange} />
-                    <input type="date" name="startDate" value={trip.startDate} onChange={handleTripChange} />
-                    <input type="date" name="endDate" value={trip.endDate} onChange={handleTripChange} />
-                    <input type="number" name="budget" placeholder="Бюджет (в ₽)" value={trip.budget} onChange={handleTripChange} />
+                    <h5 className="section-title">Пункты назначения</h5>
+                    <div className="form-group">
+                        <label className="form-label">Название:</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={newDestination.name}
+                            onChange={(e) => setNewDestination({ ...newDestination, name: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Дата:</label>
+                        <input
+                            type="date"
+                            className="form-control"
+                            value={newDestination.date}
+                            onChange={(e) => setNewDestination({ ...newDestination, date: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Время:</label>
+                        <input
+                            type="time"
+                            className="form-control"
+                            value={newDestination.time}
+                            onChange={(e) => setNewDestination({ ...newDestination, time: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Категория:</label>
+                        <select
+                            className="form-control"
+                            value={newDestination.category}
+                            onChange={(e) => setNewDestination({ ...newDestination, category: e.target.value })}
+                        >
+                            <option value="Транспорт">Транспорт</option>
+                            <option value="Проживание">Проживание</option>
+                            <option value="Еда">Еда</option>
+                            <option value="Развлечения">Развлечения</option>
+                            <option value="Прочее">Прочее</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Стоимость (руб.):</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            value={newDestination.cost}
+                            onChange={(e) => setNewDestination({ ...newDestination, cost: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Заметки:</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={newDestination.notes}
+                            onChange={(e) => setNewDestination({ ...newDestination, notes: e.target.value })}
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        className="btn btn-secondary add-destination-btn"
+                        onClick={handleAddDestination}
+                    >
+                        Добавить пункт назначения
+                    </button>
+
+                    {editingDestinationIndex !== null && editingDestination && (
+                        <div className="edit-destination-form">
+                            <h5 className="section-title">Редактировать пункт назначения</h5>
+                            <div className="form-group">
+                                <label className="form-label">Название:</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={editingDestination.name}
+                                    onChange={(e) =>
+                                        setEditingDestination({ ...editingDestination, name: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Дата:</label>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    value={editingDestination.date}
+                                    onChange={(e) =>
+                                        setEditingDestination({ ...editingDestination, date: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Время:</label>
+                                <input
+                                    type="time"
+                                    className="form-control"
+                                    value={editingDestination.time}
+                                    onChange={(e) =>
+                                        setEditingDestination({ ...editingDestination, time: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Категория:</label>
+                                <select
+                                    className="form-control"
+                                    value={editingDestination.category}
+                                    onChange={(e) =>
+                                        setEditingDestination({ ...editingDestination, category: e.target.value })
+                                    }
+                                >
+                                    <option value="Транспорт">Транспорт</option>
+                                    <option value="Проживание">Проживание</option>
+                                    <option value="Еда">Еда</option>
+                                    <option value="Развлечения">Развлечения</option>
+                                    <option value="Прочее">Прочее</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Стоимость (руб.):</label>
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    value={editingDestination.cost}
+                                    onChange={(e) =>
+                                        setEditingDestination({ ...editingDestination, cost: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Заметки:</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={editingDestination.notes}
+                                    onChange={(e) =>
+                                        setEditingDestination({ ...editingDestination, notes: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div className="edit-actions">
+                                <button
+                                    type="button"
+                                    className="btn btn-success"
+                                    onClick={handleUpdateDestination}
+                                >
+                                    Сохранить
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={handleCancelEdit}
+                                >
+                                    Отмена
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {formData.destinations.length > 0 && (
+                        <>
+                            <ul className="destination-list">
+                                {formData.destinations
+                                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                                    .map((dest, index) => (
+                                        <li key={index} className="destination-item">
+                                            <span>
+                                                {dest.name} ({formatDateTime(dest.date)}) - {dest.category}: {dest.cost} руб.{" "}
+                                                {dest.notes && `(${dest.notes})`}
+                                            </span>
+                                            <div>
+                                                <button
+                                                    type="button" // Явно указываем type="button"
+                                                    className="btn btn-secondary edit-destination-btn"
+                                                    onClick={() => handleEditDestination(index)}
+                                                >
+                                                    Редактировать
+                                                </button>
+                                                <button
+                                                    type="button" // Явно указываем type="button"
+                                                    className="btn btn-danger remove-destination-btn"
+                                                    onClick={() => handleRemoveDestination(index)}
+                                                >
+                                                    Удалить
+                                                </button>
+                                            </div>
+                                        </li>
+                                    ))}
+                            </ul>
+                            <div className={`budget-summary ${isOverBudget ? "over-budget" : ""}`}>
+                                <p>
+                                    Общая стоимость: <span>{totalCost} руб.</span>
+                                </p>
+                                <p>
+                                    Бюджет: <span>{budget} руб.</span>
+                                </p>
+                                <p>
+                                    Остаток: <span>{budget > 0 ? budget - totalCost : 0} руб.</span>
+                                </p>
+                            </div>
+                        </>
+                    )}
+
+                    <button type="submit" className="btn btn-primary submit-btn">
+                        Сохранить маршрут
+                    </button>
                 </form>
-            </div>
-
-            <div className="destination-form">
-                <h2>{editingIndex !== null ? 'Редактировать пункт назначения' : 'Добавить пункт назначения'}</h2>
-                <form onSubmit={handleDestinationSubmit}>
-                    <input type="text" name="name" placeholder="Название" value={destinationForm.name} onChange={handleDestinationChange} />
-                    <input type="date" name="date" value={destinationForm.date} onChange={handleDestinationChange} />
-                    <input type="text" name="notes" placeholder="Заметки" value={destinationForm.notes} onChange={handleDestinationChange} />
-                    <input type="number" name="cost" placeholder="Стоимость (в ₽)" value={destinationForm.cost} onChange={handleDestinationChange} />
-                    <button type="submit">{editingIndex !== null ? 'Сохранить' : 'Добавить'}</button>
-                </form>
-            </div>
-
-            <div className="trip-details">
-                <h2>Поездка: {trip.title || 'Не выбрано'}</h2>
-                <p>Даты: {trip.startDate} - {trip.endDate}</p>
-                <p>Бюджет: {parsedBudget} ₽</p>
-                <p>Остаток бюджета: {remainingBudget} ₽</p>
-                <p>Общие затраты: {totalCost} ₽</p>
-                <h3>Пункты назначения:</h3>
-                <ul>
-                    {trip.destinations.map((dest, index) => (
-                        <li key={index}>
-                            {dest.name} ({dest.date}) — {dest.cost} ₽
-                            <p>{dest.notes}</p>
-                            <button onClick={() => editDestination(index)}>Редактировать</button>
-                            <button onClick={() => deleteDestination(index)}>Удалить</button>
-                        </li>
-                    ))}
-                </ul>
-
-                {/* Кнопка для сохранения поездки */}
-                {trip.destinations.length > 0 && (
-                    <button onClick={handleTripSubmit}>Сохранить поездку</button>
-                )}
             </div>
         </div>
     );
