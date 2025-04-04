@@ -1,65 +1,572 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "./Home.css";
 
+// Функция для форматирования даты и времени из ISO 8601 в читаемый формат
+const formatDateTime = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    return date.toLocaleString("ru-RU", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).replace(",", "");
+};
+
+// Функция для извлечения даты (YYYY-MM-DD) из ISO 8601
+const extractDate = (isoString) => {
+    if (!isoString) return "";
+    return isoString.split("T")[0];
+};
+
+// Функция для извлечения времени (HH:mm) из ISO 8601
+const extractTime = (isoString) => {
+    if (!isoString) return "";
+    const timePart = isoString.split("T")[1];
+    return timePart ? timePart.slice(0, 5) : "";
+};
+
+// Функция для преобразования даты и времени из полей ввода в ISO 8601
+const toISOString = (date, time) => {
+    if (!date) return "";
+    const dateTime = time ? `${date}T${time}:00.000Z` : `${date}T00:00:00.000Z`;
+    return new Date(dateTime).toISOString();
+};
+
 const Home = () => {
-    const [predefinedTrips, setPredefinedTrips] = useState([]);
+    const navigate = useNavigate();
+    const [routes, setRoutes] = useState([]);
+    const [userRole, setUserRole] = useState(null); // Состояние для роли пользователя
+    const [editingRoute, setEditingRoute] = useState(null); // Состояние для редактируемого маршрута
+    const [formData, setFormData] = useState({
+        title: "",
+        start_date: "",
+        end_date: "",
+        budget: "",
+        destinations: [],
+    });
+    const [newDestination, setNewDestination] = useState({
+        name: "",
+        date: "",
+        time: "",
+        cost: "",
+        notes: "",
+        category: "Транспорт",
+    });
+    const [editingDestinationIndex, setEditingDestinationIndex] = useState(null);
+    const [editingDestination, setEditingDestination] = useState(null);
     const token = localStorage.getItem("token");
 
+    // Получаем данные о пользователе и его роли
     useEffect(() => {
-        fetch("http://localhost:5000/api/predefined-trips")
-            .then((response) => response.json())
-            .then((data) => setPredefinedTrips(data))
-            .catch((error) => console.error("Ошибка загрузки маршрутов:", error));
-    }, []);
+        const fetchUserRole = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/user/me", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                const data = await response.json();
+                console.log("Ответ от /api/user/me:", data); // Логируем ответ
+                if (response.ok) {
+                    setUserRole(data.role);
+                    console.log("Роль пользователя:", data.role); // Логируем роль
+                } else {
+                    toast.error(data.error || "Ошибка при получении данных пользователя");
+                }
+            } catch (error) {
+                console.error("Ошибка при запросе /api/user/me:", error);
+                toast.error("Ошибка сервера");
+            }
+        };
+
+        const fetchRoutes = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/predefined-trips", { // Изменяем на /predefined-trips
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+                const data = await response.json();
+                console.log("Ответ от /api/predefined-trips:", data); // Логируем ответ
+                if (response.ok) {
+                    setRoutes(data);
+                } else {
+                    toast.error(data.error || "Ошибка при загрузке маршрутов");
+                }
+            } catch (error) {
+                console.error("Ошибка при запросе /api/predefined-trips:", error);
+                toast.error("Ошибка сервера");
+            }
+        };
+
+        if (token) {
+            fetchUserRole();
+        }
+        fetchRoutes();
+    }, [token]);
+
+    const handleAddDestination = () => {
+        if (!newDestination.name || !newDestination.date || !newDestination.time || !newDestination.cost || !newDestination.category) {
+            toast.error("Заполните все обязательные поля пункта назначения");
+            return;
+        }
+
+        const isoDateTime = toISOString(newDestination.date, newDestination.time);
+
+        setFormData({
+            ...formData,
+            destinations: [
+                ...formData.destinations,
+                {
+                    ...newDestination,
+                    date: isoDateTime,
+                },
+            ],
+        });
+        setNewDestination({ name: "", date: "", time: "", cost: "", notes: "", category: "Транспорт" });
+    };
+
+    const handleRemoveDestination = (index) => {
+        setFormData({
+            ...formData,
+            destinations: formData.destinations.filter((_, i) => i !== index),
+        });
+        if (editingDestinationIndex === index) {
+            setEditingDestinationIndex(null);
+            setEditingDestination(null);
+        }
+    };
+
+    const handleEditDestination = (index) => {
+        const dest = formData.destinations[index];
+        setEditingDestinationIndex(index);
+        setEditingDestination({
+            ...dest,
+            date: extractDate(dest.date),
+            time: extractTime(dest.date),
+        });
+    };
+
+    const handleUpdateDestination = () => {
+        if (
+            !editingDestination.name ||
+            !editingDestination.date ||
+            !editingDestination.time ||
+            !editingDestination.cost ||
+            !editingDestination.category
+        ) {
+            toast.error("Заполните все обязательные поля пункта назначения");
+            return;
+        }
+
+        const updatedDestinations = [...formData.destinations];
+        const isoDateTime = toISOString(editingDestination.date, editingDestination.time);
+
+        updatedDestinations[editingDestinationIndex] = {
+            ...editingDestination,
+            date: isoDateTime,
+        };
+
+        setFormData({
+            ...formData,
+            destinations: updatedDestinations,
+        });
+        setEditingDestinationIndex(null);
+        setEditingDestination(null);
+    };
+
+    const handleCancelEditDestination = () => {
+        setEditingDestinationIndex(null);
+        setEditingDestination(null);
+    };
+
+    const handleEditRoute = (route) => {
+        setEditingRoute(route.id);
+        setFormData({
+            title: route.title,
+            start_date: route.start_date,
+            end_date: route.end_date,
+            budget: route.budget,
+            destinations: route.destinations,
+        });
+    };
+
+    const handleCancelEditRoute = () => {
+        setEditingRoute(null);
+        setFormData({
+            title: "",
+            start_date: "",
+            end_date: "",
+            budget: "",
+            destinations: [],
+        });
+        setNewDestination({ name: "", date: "", time: "", cost: "", notes: "", category: "Транспорт" });
+    };
+
+    const handleUpdateRoute = async (routeId) => {
+        if (!formData.title || !formData.start_date || !formData.end_date || !formData.budget) {
+            toast.error("Заполните все поля маршрута");
+            return;
+        }
+        if (formData.destinations.length === 0) {
+            toast.error("Добавьте хотя бы один пункт назначения");
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/public-trips/${routeId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                const updatedRoute = await response.json();
+                setRoutes(routes.map((route) => (route.id === routeId ? updatedRoute : route)));
+                toast.success("Маршрут успешно обновлен!");
+                handleCancelEditRoute();
+            } else {
+                const errorData = await response.json();
+                toast.error(errorData.error || "Ошибка при обновлении маршрута");
+            }
+        } catch (error) {
+            toast.error("Ошибка сервера");
+        }
+    };
+
+    const handleDeleteRoute = async (routeId) => {
+        if (!window.confirm("Вы уверены, что хотите удалить этот маршрут?")) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/public-trips/${routeId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                setRoutes(routes.filter((route) => route.id !== routeId));
+                toast.success("Маршрут успешно удален!");
+            } else {
+                const errorData = await response.json();
+                toast.error(errorData.error || "Ошибка при удалении маршрута");
+            }
+        } catch (error) {
+            toast.error("Ошибка сервера");
+        }
+    };
 
     return (
-        <div className="home">
-            <div className="hero-section">
-                <div className="container">
-                    <h1 className="hero-title fade-in">Планируйте свои путешествия с легкостью!</h1>
-                    <p className="hero-subtitle fade-in">
-                        Создавайте свои маршруты или выбирайте готовые варианты.
-                    </p>
-                    {token ? (
-                        <Link to="/add-route" className="btn btn-primary hero-btn fade-in">
-                            Создать свой маршрут
-                        </Link>
-                    ) : (
-                        <Link to="/login" className="btn btn-primary hero-btn fade-in">
-                            Войти, чтобы начать
-                        </Link>
-                    )}
-                </div>
-            </div>
-
+        <div className="home-page">
             <div className="container">
-                <h2 className="section-title fade-in">Готовые маршруты</h2>
-                {predefinedTrips.length > 0 ? (
-                    <div className="trip-grid">
-                        {predefinedTrips.map((trip) => (
-                            <div key={trip.id} className="trip-card card fade-in">
-                                <h3 className="trip-title">{trip.title}</h3>
-                                <p className="trip-dates">
-                                    {trip.start_date} - {trip.end_date}
-                                </p>
-                                <p className="trip-budget">Бюджет: {trip.budget} руб.</p>
-                                <div className="trip-destinations">
-                                    <strong>Пункты назначения:</strong>
-                                    <ul>
-                                        {trip.destinations.map((dest) => (
-                                            <li key={dest.id}>
-                                                {dest.name} ({dest.date}) - Стоимость: {dest.cost} руб.
-                                                {dest.notes && <span> - {dest.notes}</span>}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <h1 className="page-title fade-in">Готовые маршруты</h1>
+                {routes.length === 0 ? (
+                    <p className="no-routes">Маршруты отсутствуют.</p>
                 ) : (
-                    <p className="no-trips fade-in">Готовых маршрутов пока нет.</p>
+                    routes.map((route) => (
+                        <div key={route.id} className="route-card card fade-in">
+                            {editingRoute === route.id ? (
+                                <div className="edit-form">
+                                    <div className="form-group">
+                                        <label className="form-label">Название маршрута:</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={formData.title}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Дата и время начала:</label>
+                                        <input
+                                            type="datetime-local"
+                                            className="form-control"
+                                            value={formData.start_date ? formData.start_date.slice(0, 16) : ""}
+                                            onChange={(e) => setFormData({ ...formData, start_date: new Date(e.target.value).toISOString() })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Дата и время окончания:</label>
+                                        <input
+                                            type="datetime-local"
+                                            className="form-control"
+                                            value={formData.end_date ? formData.end_date.slice(0, 16) : ""}
+                                            onChange={(e) => setFormData({ ...formData, end_date: new Date(e.target.value).toISOString() })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Бюджет (руб.):</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={formData.budget}
+                                            onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+
+                                    <h5 className="section-title">Пункты назначения</h5>
+                                    <div className="form-group">
+                                        <label className="form-label">Название:</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={newDestination.name}
+                                            onChange={(e) => setNewDestination({ ...newDestination, name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Дата:</label>
+                                        <input
+                                            type="date"
+                                            className="form-control"
+                                            value={newDestination.date}
+                                            onChange={(e) => setNewDestination({ ...newDestination, date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Время:</label>
+                                        <input
+                                            type="time"
+                                            className="form-control"
+                                            value={newDestination.time}
+                                            onChange={(e) => setNewDestination({ ...newDestination, time: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Категория:</label>
+                                        <select
+                                            className="form-control"
+                                            value={newDestination.category}
+                                            onChange={(e) => setNewDestination({ ...newDestination, category: e.target.value })}
+                                        >
+                                            <option value="Транспорт">Транспорт</option>
+                                            <option value="Проживание">Проживание</option>
+                                            <option value="Еда">Еда</option>
+                                            <option value="Развлечения">Развлечения</option>
+                                            <option value="Прочее">Прочее</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Стоимость (руб.):</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={newDestination.cost}
+                                            onChange={(e) => setNewDestination({ ...newDestination, cost: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Заметки:</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={newDestination.notes}
+                                            onChange={(e) => setNewDestination({ ...newDestination, notes: e.target.value })}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary add-destination-btn"
+                                        onClick={handleAddDestination}
+                                    >
+                                        Добавить пункт назначения
+                                    </button>
+
+                                    {editingDestinationIndex !== null && editingDestination && (
+                                        <div className="edit-destination-form">
+                                            <h5 className="section-title">Редактировать пункт назначения</h5>
+                                            <div className="form-group">
+                                                <label className="form-label">Название:</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={editingDestination.name}
+                                                    onChange={(e) =>
+                                                        setEditingDestination({ ...editingDestination, name: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Дата:</label>
+                                                <input
+                                                    type="date"
+                                                    className="form-control"
+                                                    value={editingDestination.date}
+                                                    onChange={(e) =>
+                                                        setEditingDestination({ ...editingDestination, date: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Время:</label>
+                                                <input
+                                                    type="time"
+                                                    className="form-control"
+                                                    value={editingDestination.time}
+                                                    onChange={(e) =>
+                                                        setEditingDestination({ ...editingDestination, time: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Категория:</label>
+                                                <select
+                                                    className="form-control"
+                                                    value={editingDestination.category}
+                                                    onChange={(e) =>
+                                                        setEditingDestination({ ...editingDestination, category: e.target.value })
+                                                    }
+                                                >
+                                                    <option value="Транспорт">Транспорт</option>
+                                                    <option value="Проживание">Проживание</option>
+                                                    <option value="Еда">Еда</option>
+                                                    <option value="Развлечения">Развлечения</option>
+                                                    <option value="Прочее">Прочее</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Стоимость (руб.):</label>
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={editingDestination.cost}
+                                                    onChange={(e) =>
+                                                        setEditingDestination({ ...editingDestination, cost: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Заметки:</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={editingDestination.notes}
+                                                    onChange={(e) =>
+                                                        setEditingDestination({ ...editingDestination, notes: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="edit-actions">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-success"
+                                                    onClick={handleUpdateDestination}
+                                                >
+                                                    Сохранить
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary"
+                                                    onClick={handleCancelEditDestination}
+                                                >
+                                                    Отмена
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.destinations.length > 0 && (
+                                        <ul className="destination-list">
+                                            {formData.destinations
+                                                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                                                .map((dest, index) => (
+                                                    <li key={index} className="destination-item">
+                                                        <span>
+                                                            {dest.name} ({formatDateTime(dest.date)}) - {dest.category}: {dest.cost} руб.{" "}
+                                                            {dest.notes && `(${dest.notes})`}
+                                                        </span>
+                                                        <div>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-secondary edit-destination-btn"
+                                                                onClick={() => handleEditDestination(index)}
+                                                            >
+                                                                Редактировать
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-danger remove-destination-btn"
+                                                                onClick={() => handleRemoveDestination(index)}
+                                                            >
+                                                                Удалить
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    )}
+
+                                    <div className="edit-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btn-success"
+                                            onClick={() => handleUpdateRoute(route.id)}
+                                        >
+                                            Сохранить маршрут
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={handleCancelEditRoute}
+                                        >
+                                            Отмена
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="route-details">
+                                    <h3 className="route-title">{route.title}</h3>
+                                    <p className="route-dates">
+                                        <strong>Даты:</strong> {formatDateTime(route.start_date)} - {formatDateTime(route.end_date)}
+                                    </p>
+                                    <p className="route-budget">
+                                        <strong>Бюджет:</strong> {route.budget} руб.
+                                    </p>
+                                    <div className="route-destinations">
+                                        <strong>Пункты назначения:</strong>
+                                        <ul>
+                                            {route.destinations
+                                                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                                                .map((dest) => (
+                                                    <li key={dest.id}>
+                                                        {dest.name} ({formatDateTime(dest.date)}) - {dest.category}: {dest.cost} руб.
+                                                        {dest.notes && <span> - {dest.notes}</span>}
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    </div>
+                                    {userRole === "admin" && (
+                                        <div className="route-actions">
+                                            <button
+                                                className="btn btn-secondary edit-btn"
+                                                onClick={() => handleEditRoute(route)}
+                                            >
+                                                Редактировать
+                                            </button>
+                                            <button
+                                                className="btn btn-danger delete-btn"
+                                                onClick={() => handleDeleteRoute(route.id)}
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))
                 )}
             </div>
         </div>
