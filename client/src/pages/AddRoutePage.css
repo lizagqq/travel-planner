@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f4f8;
+    color: #333;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+.trip-form, .destination-form {
+    background: #f9fafc;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease;
+}
+
+.trip-form:hover, .destination-form:hover {
+    transform: translateY(-5px);
+}
+
+.trip-form h2, .destination-form h2 {
+    margin: 0 0 15px 0;
+    color: #34495e;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.trip-form input, .destination-form input {
+    padding: 12px;
+    margin: 8px 0;
+    width: calc(100% - 24px);
+    border: 1px solid #e0e4e8;
+    border-radius: 10px;
+    font-size: 1rem;
+    background: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.trip-form input:focus, .destination-form input:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+button {
+    padding: 12px 25px;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.trip-details {
+    margin-top: 30px;
+}
+
+.trip-details h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+.trip-details p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin: 10px 0;
+}
+
+.trip-details span {
+    color: #34495e;
+    font-weight: 600;
+}
+
+.destination-list {
+    list-style: none;
+    padding: 0;
+}
+
+.destination-list li {
+    padding: 15px;
+    background: #f9fafc;
+    margin: 10px 0;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease;
+}
+
+.destination-list li:hover {
+    transform: translateY(-3px);
+}
+
+.destination-list li button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    background: #e74c3c;
+    margin-left: 10px;
+}
+
+.destination-list li button:first-child {
+    background: #2ecc71;
+}
+
+.destination-list li button:hover {
+    background: #c0392b;
+}
+
+.destination-list li button:first-child:hover {
+    background: #27ae60;
+}
