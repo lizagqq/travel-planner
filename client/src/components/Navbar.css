@@ -1,26 +1,17 @@
 .navbar {
-    background-color: #333;
-    padding: 10px;
-  }
-  
-  .navbar ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-  }
-  
-  .navbar li {
-    margin: 0 15px;
-  }
-  
-  .navbar a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-  }
-  
-  .navbar a:hover {
-    text-decoration: underline;
-  }
-  
+  padding: 0.5rem 1rem; /* Уменьшаем внутренние отступы */
+}
+
+.navbar-brand {
+  font-size: 1.25rem; /* Уменьшаем размер логотипа */
+}
+
+.nav-link {
+  font-size: 0.9rem; /* Уменьшаем размер текста ссылок */
+  padding: 0.5rem 0.75rem; /* Уменьшаем отступы у ссылок */
+}
+
+.btn-sm {
+  font-size: 0.85rem; /* Уменьшаем размер текста кнопки */
+  padding: 0.25rem 0.5rem; /* Уменьшаем отступы кнопки */
+}

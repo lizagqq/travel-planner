@@ -1,8 +1,8 @@
 const express = require("express");
-const { addTrip, getUserTrips } = require("../controllers/tripController"); // Проверь путь
-const authMiddleware = require("../middleware/authMiddleware");
+const { addTrip, getUserTrips } = require("../controllers/tripController");
+const { authMiddleware } = require("../middleware/authMiddleware");
 
-console.log("addTrip:", addTrip); // Отладка
+console.log("addTrip:", addTrip);
 console.log("getUserTrips:", getUserTrips);
 
 const router = express.Router();

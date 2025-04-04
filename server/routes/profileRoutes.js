@@ -1,6 +1,8 @@
 const express = require("express");
-const authMiddleware = require("../middleware/authMiddleware"); // Прямой импорт
+const { authMiddleware } = require("../middleware/authMiddleware");
 const pool = require("../db");
+
+console.log("authMiddleware in profileRoutes:", authMiddleware); // Добавляем отладку
 
 const router = express.Router();
 
