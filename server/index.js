@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
@@ -5,6 +6,7 @@ const tripRoutes = require("./routes/tripRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const predefinedTripRoutes = require("./routes/predefinedTripRoutes");
 const userRoutes = require("./routes/users");
+
 
 
 console.log("authRoutes:", authRoutes);

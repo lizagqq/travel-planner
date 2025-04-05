@@ -10,14 +10,20 @@ const auth = (req, res, next) => {
     if (!token) {
         return res.status(401).json({ error: "Токен не предоставлен" });
     }
+    
+    // Логируем секрет для проверки
+    console.log("JWT_SECRET на сервере:", process.env.JWT_SECRET);
+
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {
+        console.error("Ошибка при верификации токена:", error.message); // Логирование ошибки
         res.status(401).json({ error: "Недействительный токен" });
     }
 };
+
 
 // Middleware для проверки роли администратора
 const isAdmin = async (req, res, next) => {
