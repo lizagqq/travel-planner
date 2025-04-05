@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const pool = require("../db"); // Подключаем базу данных
 const router = express.Router();
 
-const SECRET_KEY = "your_secret_key"; // Лучше хранить в переменной окружения
+const SECRET_KEY = process.env.JWT_SECRET;
 
 // Маршрут для входа (login)
 router.post("/login", async (req, res) => {

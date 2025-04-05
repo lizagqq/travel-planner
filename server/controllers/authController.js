@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const pool = require("../db");
 
+// Подтягиваем секрет из .env
+const SECRET_KEY = process.env.JWT_SECRET;
+
 const registerUser = async (req, res) => {
     const { username, email, password } = req.body;
     try {
@@ -11,8 +14,8 @@ const registerUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await pool.query(
-            "INSERT INTO Users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *",
+        await pool.query(
+            "INSERT INTO Users (username, email, password_hash) VALUES ($1, $2, $3)",
             [username, email, hashedPassword]
         );
 
@@ -31,7 +34,9 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
         if (!isMatch) return res.status(400).json({ error: "Неверный email или пароль" });
 
-        const token = jwt.sign({ id: user.rows[0].id }, "secretkey", { expiresIn: "1h" });
+        // Используем SECRET_KEY из .env
+        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "1h" });
+
         res.json({ token });
     } catch (err) {
         res.status(500).json({ error: "Ошибка сервера" });

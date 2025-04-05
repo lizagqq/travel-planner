@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 // Токен из твоего сообщения
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM1LCJpYXQiOjE3NDM4NzkwNTIsImV4cCI6MTc0Mzg4MjY1Mn0.IAm-ZuXVXXtIzER09bvPqBh8hVuyB0LieKV8YC92Gg4";
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc0Mzg4MDYyNCwiZXhwIjoxNzQzODg0MjI0fQ.Aem0hdSivKqNVeBf3r1yR5K3KmfeSIxU3TBd_EWBdhM";
 const secret = "1111";
 
 // Разделим токен на части

@@ -25,7 +25,7 @@ app.use("/api", tripRoutes);
 app.use("/api", profileRoutes);
 app.use("/api", predefinedTripRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api", tripRoutes); 
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
+console.log("JWT_SECRET:", process.env.JWT_SECRET);

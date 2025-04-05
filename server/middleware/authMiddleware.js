@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
+// Используем секрет из переменной окружения
+const SECRET_KEY = process.env.JWT_SECRET;
+
 const authMiddleware = (req, res, next) => {
     const token = req.header("Authorization")?.split(" ")[1];
 
@@ -9,7 +12,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, "your_secret_key");
+        const decoded = jwt.verify(token, SECRET_KEY);
         req.user = decoded;
         next();
     } catch (error) {
@@ -25,7 +28,7 @@ const adminMiddleware = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, "your_secret_key");
+        const decoded = jwt.verify(token, SECRET_KEY);
         const userId = decoded.userId;
         const user = await pool.query("SELECT role FROM users WHERE id = $1", [userId]);
 
