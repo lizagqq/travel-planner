@@ -72,7 +72,12 @@ router.post("/login", async (req, res) => {
 // Получение данных текущего пользователя
 router.get("/me", auth, async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.id);
+        const userQuery = await client.query(
+            "SELECT id, username, role FROM users WHERE id = $1",
+            [req.user.id]
+        );
+        const user = userQuery.rows[0];
+
         if (!user) {
             return res.status(404).json({ error: "Пользователь не найден" });
         }

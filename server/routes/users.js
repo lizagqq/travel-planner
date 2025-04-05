@@ -118,4 +118,5 @@ router.get("/me", auth, async (req, res) => {
     }
 });
 
+console.log("Декодированный токен:", decoded);
 module.exports = router;
