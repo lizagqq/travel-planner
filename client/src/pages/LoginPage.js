@@ -16,8 +16,8 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const url = isLogin
-            ? "http://localhost:5000/api/auth/login"
-            : "http://localhost:5000/api/auth/register";
+            ? "http://localhost:5000/api/user/login"
+            : "http://localhost:5000/api/user/register";
         const body = isLogin
             ? { email, password }
             : { username, email, password };

@@ -7,11 +7,11 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 
 router.post("/register", async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, email, password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await pool.query(
-            "INSERT INTO users (username, password, role, createdAt) VALUES ($1, $2, $3, NOW()) RETURNING *",
-            [username, hashedPassword, "user"]
+            "INSERT INTO users (username, email, password_hash, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *",
+            [username, email, hashedPassword, "user"]
         );
         res.json(newUser.rows[0]);
     } catch (error) {
@@ -22,19 +22,20 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
     try {
-        const { username, password } = req.body;
-        const userQuery = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+        const { email, password } = req.body;
+        const userQuery = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
         const user = userQuery.rows[0];
 
         if (!user) {
-            return res.status(400).json({ error: "Неверное имя пользователя или пароль" });
+            return res.status(400).json({ error: "Неверный email или пароль" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
-            return res.status(400).json({ error: "Неверное имя пользователя или пароль" });
+            return res.status(400).json({ error: "Неверный email или пароль" });
         }
 
+        console.log("JWT_SECRET:", process.env.JWT_SECRET); // Временный лог для проверки
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "30d" });
         console.log("Созданный токен при авторизации:", token);
         res.json({ token });
