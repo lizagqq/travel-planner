@@ -4,6 +4,7 @@ const userRoutes = require("./routes/users");
 const profileRoutes = require("./routes/profileRoutes");
 const predefinedTripRoutes = require("./routes/predefinedTripRoutes");
 require("dotenv").config();
+console.log("JWT_SECRET in index.js:", process.env.JWT_SECRET); // Временный лог
 
 const app = express();
 

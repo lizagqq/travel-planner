@@ -43,8 +43,8 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/add-route" element={<AddRoutePage />} />
                     <Route path="/admin" element={<AdminPanel />} />
+                    <Route path="/routes" element={<RoutesPage />} /> {/* Добавляем в PrivateRoute */}
                 </Route>
-                <Route path="/routes" element={<RoutesPage />} />
             </Routes>
         </Router>
     );

@@ -11,7 +11,7 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { from } = location.state || { from: "/profile" };
+    const { from } = location.state || { from: "/routes" }; // Изменяем на /routes
 
     const handleSubmit = async (e) => {
         e.preventDefault();
