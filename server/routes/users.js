@@ -53,7 +53,6 @@ router.get("/me", authMiddleware, async (req, res) => {
             [req.user.id]
         );
         console.log("Результат запроса:", userQuery.rows);
-
         const user = userQuery.rows[0];
         if (!user) {
             return res.status(404).json({ error: "Пользователь не найден" });

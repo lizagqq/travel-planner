@@ -1,19 +1,14 @@
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
-const SECRET_KEY = process.env.JWT_SECRET;
-
 const verifyToken = (token) => {
-    if (!token) {
-        return null;
-    }
-
+    if (!token) return null;
     try {
+        const SECRET_KEY = process.env.JWT_SECRET; // Бери секрет здесь
+        console.log("SECRET_KEY in verifyToken:", SECRET_KEY); // Лог для отладки
         const decoded = jwt.verify(token, SECRET_KEY);
-        const userId = decoded.id;
-        if (!userId) {
-            return null;
-        }
+        const userId = decoded.id; // Ожидаем id в токене
+        if (!userId) return null;
         return { userId };
     } catch (error) {
         console.error("Ошибка при верификации токена:", error.message);
@@ -23,6 +18,7 @@ const verifyToken = (token) => {
 
 const authMiddleware = async (req, res, next) => {
     const token = req.header("Authorization")?.split(" ")[1];
+    console.log("Token in authMiddleware:", token); // Лог для отладки
     const result = verifyToken(token);
 
     if (!result) {

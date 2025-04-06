@@ -10,20 +10,28 @@ const Navbar = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (token) {
-            fetch("http://localhost:5000/api/profile", {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    setUsername(data.username);
-                    setIsAdmin(data.role === "admin");
-                })
-                .catch((error) => {
-                    console.error("Ошибка загрузки профиля:", error);
-                    localStorage.removeItem("token");
+        const fetchUser = async () => {
+            if (!token) return;
+
+            try {
+                const response = await fetch("http://localhost:5000/api/profile", {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-        }
+                console.log("Response status:", response.status); // Добавь лог
+                if (!response.ok) {
+                    throw new Error(`Ошибка сервера: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log("Profile data from server:", data); // Добавь лог
+                setUsername(data.username);
+                setIsAdmin(data.role === "admin");
+            } catch (error) {
+                console.error("Ошибка загрузки профиля:", error);
+                setUsername("");
+                setIsAdmin(false);
+            }
+        };
+        fetchUser();
     }, [token]);
 
     const handleLogout = () => {
@@ -58,7 +66,7 @@ const Navbar = () => {
                                 </Link>
                             )}
                             <Link to="/profile" className="navbar-link">
-                                Привет, {username}!
+                                Привет, {username || "Пользователь"}!
                             </Link>
                             <button onClick={handleLogout} className="navbar-btn">
                                 Выйти

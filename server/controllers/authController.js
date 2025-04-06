@@ -35,7 +35,7 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
         if (!isMatch) return res.status(400).json({ error: "Неверный email или пароль" });
 
-        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "30d" }); // ✅ Изменено на 30 дней
+        const token = jwt.sign({ id: user.rows[0].id }, SECRET_KEY, { expiresIn: "30d" });
 
         res.json({ token });
     } catch (err) {
