@@ -307,7 +307,7 @@ const AddRoutePage = () => {
                         className="btn btn-secondary add-destination-btn"
                         onClick={handleAddDestination}
                     >
-                        Добавить пункт назначения
+                        Добавить 
                     </button>
 
                     {editingDestinationIndex !== null && editingDestination && (
