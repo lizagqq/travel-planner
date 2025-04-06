@@ -29,7 +29,7 @@ const authMiddleware = (req, res, next) => {
     if (res.headersSent) return;
 
     const { userId } = result;
-    req.user = { id: id }; 
+    req.user = { id: userId };
     next();
 };
 

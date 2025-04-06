@@ -25,6 +25,7 @@ const registerUser = async (req, res) => {
     }
 };
 
+// controllers/authController.js
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -34,8 +35,7 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
         if (!isMatch) return res.status(400).json({ error: "Неверный email или пароль" });
 
-        // Используем SECRET_KEY из .env
-        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "30d" });
+        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "30d" }); // ✅ Изменено на 30 дней
 
         res.json({ token });
     } catch (err) {

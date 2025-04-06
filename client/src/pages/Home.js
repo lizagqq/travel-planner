@@ -216,9 +216,9 @@ const Home = () => {
             toast.error("Добавьте хотя бы один пункт назначения");
             return;
         }
-
+    
         try {
-            const response = await fetch(`http://localhost:5000/api/public-trips/${routeId}`, {
+            const response = await fetch(`http://localhost:5000/api/predefined-trips/${routeId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -226,7 +226,7 @@ const Home = () => {
                 },
                 body: JSON.stringify(formData),
             });
-
+    
             if (response.ok) {
                 const updatedRoute = await response.json();
                 setRoutes(routes.map((route) => (route.id === routeId ? updatedRoute : route)));
@@ -240,18 +240,18 @@ const Home = () => {
             toast.error("Ошибка сервера");
         }
     };
-
+    
     const handleDeleteRoute = async (routeId) => {
         if (!window.confirm("Вы уверены, что хотите удалить этот маршрут?")) return;
-
+    
         try {
-            const response = await fetch(`http://localhost:5000/api/public-trips/${routeId}`, {
+            const response = await fetch(`http://localhost:5000/api/predefined-trips/${routeId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-
+    
             if (response.ok) {
                 setRoutes(routes.filter((route) => route.id !== routeId));
                 toast.success("Маршрут успешно удален!");

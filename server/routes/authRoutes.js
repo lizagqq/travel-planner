@@ -1,66 +1,44 @@
-const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const pool = require("../db"); // Подключаем базу данных
-const router = express.Router();
+const { validationResult } = require("express-validator");
+const pool = require("../db");
 
 const SECRET_KEY = process.env.JWT_SECRET;
 
-// Маршрут для входа (login)
-router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        // Проверяем наличие пользователя
-        const userResult = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-        const user = userResult.rows[0];
-
-        if (!user) {
-            return res.status(401).json({ error: "Пользователь не найден" });
-        }
-
-        // Проверяем пароль
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash); // Используем password_hash
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: "Неверный пароль" });
-        }
-
-        // Генерация JWT-токена
-        const token = jwt.sign({ userId: user.id }, SECRET_KEY, { expiresIn: "1h" });
-
-        res.json({ token });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Ошибка сервера" });
-    }
-});
-
-// Маршрут для регистрации (register)
-router.post("/register", async (req, res) => {
+const registerUser = async (req, res) => {
     const { username, email, password } = req.body;
-
     try {
-        // Проверяем наличие пользователя с таким email
-        const existingUser = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-        if (existingUser.rows.length > 0) {
-            return res.status(400).json({ error: "Пользователь с таким email уже существует" });
-        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-        // Хешируем пароль
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Сохраняем пользователя в базе данных
         await pool.query(
-            "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)", // Используем password_hash
+            "INSERT INTO Users (username, email, password_hash) VALUES ($1, $2, $3)",
             [username, email, hashedPassword]
         );
 
-        res.status(201).json({ message: "Пользователь успешно зарегистрирован" });
+        res.json({ message: "Пользователь зарегистрирован!" });
     } catch (err) {
-        console.error(err.message);
         res.status(500).json({ error: "Ошибка сервера" });
     }
-});
+};
 
+const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await pool.query("SELECT * FROM Users WHERE email = $1", [email]);
+        if (user.rows.length === 0) return res.status(400).json({ error: "Неверный email или пароль" });
 
-module.exports = router;
+        const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
+        if (!isMatch) return res.status(400).json({ error: "Неверный email или пароль" });
+
+        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "30d" }); // ✅ Изменено на 30 дней
+
+        res.json({ token });
+    } catch (err) {
+        res.status(500).json({ error: "Ошибка сервера" });
+    }
+};
+
+module.exports = { registerUser, loginUser };

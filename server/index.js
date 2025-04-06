@@ -6,7 +6,7 @@ const tripRoutes = require("./routes/tripRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const predefinedTripRoutes = require("./routes/predefinedTripRoutes");
 const userRoutes = require("./routes/users");
-const authRoutes = require("./routes/auth");
+
 
 
 
