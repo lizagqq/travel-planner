@@ -9,10 +9,9 @@ const LoginPage = () => {
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
     const navigate = useNavigate();
-    const location = useLocation(); // Получаем информацию о текущем маршруте
+    const location = useLocation();
 
-    // Проверяем, есть ли в state информация о перенаправлении
-    const { from } = location.state || { from: "/profile" }; // По умолчанию перенаправляем на /profile
+    const { from } = location.state || { from: "/profile" };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,7 +35,6 @@ const LoginPage = () => {
                 if (isLogin) {
                     localStorage.setItem("token", data.token);
                     toast.success("Вы успешно вошли!");
-                    // Перенаправляем на страницу, указанную в state.from, или на /profile
                     navigate(from);
                 } else {
                     toast.success("Регистрация прошла успешно! Теперь войдите.");
@@ -51,54 +49,56 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <h1 className="text-center mb-4">{isLogin ? "Вход" : "Регистрация"}</h1>
-            <form onSubmit={handleSubmit} className="card p-4 mx-auto" style={{ maxWidth: "400px" }}>
-                {!isLogin && (
-                    <div className="mb-3">
-                        <label className="form-label">Имя пользователя:</label>
+        <div className="login-page">
+            <div className="login-container">
+                <h1 className="login-title">{isLogin ? "Вход" : "Регистрация"}</h1>
+                <form onSubmit={handleSubmit} className="login-form">
+                    {!isLogin && (
+                        <div className="form-group">
+                            <label className="form-label">Имя пользователя:</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
+                        </div>
+                    )}
+                    <div className="form-group">
+                        <label className="form-label">Email:</label>
                         <input
-                            type="text"
-                            className="form-control"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            type="email"
+                            className="form-input"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                         />
                     </div>
-                )}
-                <div className="mb-3">
-                    <label className="form-label">Email:</label>
-                    <input
-                        type="email"
-                        className="form-control"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
-                <div className="mb-3">
-                    <label className="form-label">Пароль:</label>
-                    <input
-                        type="password"
-                        className="form-control"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit" className="btn btn-primary w-100">
-                    {isLogin ? "Войти" : "Зарегистрироваться"}
-                </button>
-            </form>
-            <p className="text-center mt-3">
-                {isLogin ? "Нет аккаунта?" : "Уже есть аккаунт?"}{" "}
-                <button
-                    className="btn btn-link p-0"
-                    onClick={() => setIsLogin(!isLogin)}
-                >
-                    {isLogin ? "Зарегистрироваться" : "Войти"}
-                </button>
-            </p>
+                    <div className="form-group">
+                        <label className="form-label">Пароль:</label>
+                        <input
+                            type="password"
+                            className="form-input"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <button type="submit" className="submit-button">
+                        {isLogin ? "Войти" : "Зарегистрироваться"}
+                    </button>
+                </form>
+                <p className="toggle-text">
+                    {isLogin ? "Нет аккаунта?" : "Уже есть аккаунт?"}{" "}
+                    <button
+                        className="toggle-button"
+                        onClick={() => setIsLogin(!isLogin)}
+                    >
+                        {isLogin ? "Зарегистрироваться" : "Войти"}
+                    </button>
+                </p>
+            </div>
         </div>
     );
 };
