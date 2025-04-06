@@ -35,7 +35,7 @@ const loginUser = async (req, res) => {
         if (!isMatch) return res.status(400).json({ error: "Неверный email или пароль" });
 
         // Используем SECRET_KEY из .env
-        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "1h" });
+        const token = jwt.sign({ userId: user.rows[0].id }, SECRET_KEY, { expiresIn: "30d" });
 
         res.json({ token });
     } catch (err) {

@@ -2,7 +2,7 @@ const pool = require("../db");
 
 const addTrip = async (req, res) => {
     const { title, start_date, end_date, budget, destinations } = req.body;
-    const user_id = req.user.userId;
+    const user_id = req.user.id;
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -28,7 +28,7 @@ const addTrip = async (req, res) => {
 };
 
 const getUserTrips = async (req, res) => {
-    const user_id = req.user.userId;
+    const user_id = req.user.id;
     try {
         const trips = await pool.query("SELECT * FROM trips WHERE user_id = $1", [user_id]);
         const result = await Promise.all(trips.rows.map(async (trip) => {
@@ -44,7 +44,7 @@ const getUserTrips = async (req, res) => {
 const updateTrip = async (req, res) => {
     const { id } = req.params;
     const { title, start_date, end_date, budget, destinations } = req.body;
-    const user_id = req.user.userId;
+    const user_id = req.user.id;
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -85,7 +85,7 @@ const updateTrip = async (req, res) => {
 
 const deleteTrip = async (req, res) => {
     const { id } = req.params;
-    const user_id = req.user.userId;
+    const user_id = req.user.id;
     const client = await pool.connect();
     try {
         await client.query("BEGIN");

@@ -8,7 +8,10 @@ const router = express.Router();
 
 router.get("/profile", authMiddleware, async (req, res) => {
     try {
-        const userId = req.user.userId;
+        // Используем req.user.id вместо req.user.userId
+        const userId = req.user.id;
+        console.log("Извлечённый userId в /profile:", userId); // Добавляем отладку
+
         const user = await pool.query(
             "SELECT id, username, email, created_at FROM users WHERE id = $1",
             [userId]

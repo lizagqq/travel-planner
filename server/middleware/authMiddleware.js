@@ -1,29 +1,22 @@
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
-// Используем секрет из переменной окружения
 const SECRET_KEY = process.env.JWT_SECRET;
 
-// Общая функция для верификации токена
 const verifyToken = (token, res) => {
     if (!token) {
         return res.status(401).json({ error: "Нет токена, доступ запрещен" });
     }
 
     try {
-        console.log("Проверяемый токен:", token);
-        console.log("JWT_SECRET:", SECRET_KEY);
-
         const decoded = jwt.verify(token, SECRET_KEY);
-        console.log("Декодированный токен:", decoded);
+        const userId = decoded.id; // токен содержит id
 
-        // Поддерживаем как id, так и userId
-        const userId = decoded.id || decoded.userId;
         if (!userId) {
             return res.status(401).json({ error: "Недействительный токен: отсутствует id пользователя" });
         }
 
-        return { userId, decoded };
+        return { userId };
     } catch (error) {
         console.error("Ошибка при верификации токена:", error.message);
         return res.status(401).json({ error: `Недействительный токен: ${error.message}` });
@@ -32,28 +25,23 @@ const verifyToken = (token, res) => {
 
 const authMiddleware = (req, res, next) => {
     const token = req.header("Authorization")?.split(" ")[1];
-
     const result = verifyToken(token, res);
-    if (res.headersSent) return; // Если ответ уже отправлен, выходим
+    if (res.headersSent) return;
 
-    const { userId, decoded } = result;
-    req.user = { id: userId, ...decoded };
-    console.log("req.user в authMiddleware:", req.user);
+    const { userId } = result;
+    req.user = { id: id }; 
     next();
 };
 
 const adminMiddleware = async (req, res, next) => {
     const token = req.header("Authorization")?.split(" ")[1];
-
     const result = verifyToken(token, res);
-    if (res.headersSent) return; // Если ответ уже отправлен, выходим
+    if (res.headersSent) return;
 
-    const { userId, decoded } = result;
+    const { userId } = result;
 
     try {
-        console.log("Ищем пользователя с id:", userId);
         const userQuery = await pool.query("SELECT role FROM users WHERE id = $1", [userId]);
-        console.log("Результат запроса:", userQuery.rows);
 
         if (userQuery.rows.length === 0) {
             return res.status(404).json({ error: "Пользователь не найден" });
@@ -64,8 +52,7 @@ const adminMiddleware = async (req, res, next) => {
             return res.status(403).json({ error: "Доступ запрещен: требуется роль администратора" });
         }
 
-        req.user = { id: userId, ...decoded };
-        console.log("req.user в adminMiddleware:", req.user);
+        req.user = { id: userId, role: userRole }; // ✅ id и роль
         next();
     } catch (error) {
         console.error("Ошибка при проверке роли администратора:", error.message);
