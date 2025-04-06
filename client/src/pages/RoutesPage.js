@@ -22,6 +22,20 @@ const RoutesPage = () => {
     });
     const token = localStorage.getItem("token");
 
+    // Функция для форматирования даты
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleString("ru-RU", {
+            weekday: "short",  // сокращенное название дня недели
+            year: "numeric",   // год
+            month: "numeric",  // месяц
+            day: "numeric",    // день
+            hour: "numeric",   // час
+            minute: "numeric", // минута
+            
+        });
+    };
+
     useEffect(() => {
         if (!token) {
             navigate("/login", { state: { from: "/routes" } });
@@ -135,7 +149,7 @@ const RoutesPage = () => {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
-    
+
             if (response.ok) {
                 toast.success("Маршрут удален");
                 setTrips(trips.filter((trip) => trip.id !== tripId));
@@ -147,7 +161,7 @@ const RoutesPage = () => {
             toast.error("Ошибка сервера");
         }
     };
-    
+
     return (
         <div className="routes-page">
             <div className="container">
@@ -207,7 +221,7 @@ const RoutesPage = () => {
                                             />
                                         </div>
 
-                                        <h5 className="section-title">Пункты назначения</h5>
+                                        <h5 className="section-title">Пункты Назначения</h5>
                                         <div className="form-group">
                                             <label className="form-label">Название:</label>
                                             <input
@@ -265,7 +279,7 @@ const RoutesPage = () => {
                                                 {formData.destinations.map((dest, index) => (
                                                     <li key={index} className="destination-item">
                                                         <span>
-                                                            {dest.name} ({dest.date}) - {dest.cost} руб.{" "}
+                                                            {dest.name} ({formatDate(dest.date)}) - {dest.cost} руб.{" "}
                                                             {dest.notes && `(${dest.notes})`}
                                                         </span>
                                                         <button
@@ -298,17 +312,17 @@ const RoutesPage = () => {
                                     <div className="trip-details">
                                         <h3 className="trip-title">{trip.title}</h3>
                                         <p className="trip-dates">
-                                            <strong>Даты:</strong> {trip.start_date} - {trip.end_date}
+                                            <strong>Даты:</strong> {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
                                         </p>
                                         <p className="trip-budget">
                                             <strong>Бюджет:</strong> {trip.budget} руб.
                                         </p>
                                         <div className="trip-destinations">
-                                            <strong>Пункты назначения:</strong>
+                                            <strong>Точки:</strong>
                                             <ul>
                                                 {trip.destinations.map((dest) => (
                                                     <li key={dest.id}>
-                                                        {dest.name} ({dest.date}) - Стоимость: {dest.cost} руб.
+                                                        {dest.name} ({formatDate(dest.date)}) - Стоимость: {dest.cost} руб.
                                                         {dest.notes && <span> - {dest.notes}</span>}
                                                     </li>
                                                 ))}

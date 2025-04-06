@@ -242,7 +242,7 @@ const AddRoutePage = () => {
                         />
                     </div>
 
-                    <h5 className="section-title">Пункты назначения</h5>
+                    <h5 className="section-title">Чем займемся?</h5>
                     <div className="form-group">
                         <label className="form-label">Название:</label>
                         <input
