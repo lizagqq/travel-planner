@@ -28,16 +28,18 @@ const addTrip = async (req, res) => {
 };
 
 const getUserTrips = async (req, res) => {
-    const user_id = req.user.id;
     try {
-        const trips = await pool.query("SELECT * FROM trips WHERE user_id = $1", [user_id]);
-        const result = await Promise.all(trips.rows.map(async (trip) => {
-            const destinations = await pool.query("SELECT * FROM destinations WHERE trip_id = $1", [trip.id]);
-            return { ...trip, destinations: destinations.rows };
-        }));
-        res.json(result);
+        const userId = req.user.id;
+        console.log("Fetching trips for userId:", userId); // Отладка
+        const trips = await pool.query(
+            "SELECT id, title, start_date, end_date, budget FROM trips WHERE user_id = $1",
+            [userId]
+        );
+        console.log("Trips data sent:", trips.rows); // Отладка
+        res.json(trips.rows);
     } catch (error) {
-        res.status(500).json({ error: "Ошибка при получении путешествий" });
+        console.error("Ошибка при получении поездок:", error);
+        res.status(500).json({ error: "Ошибка сервера" });
     }
 };
 

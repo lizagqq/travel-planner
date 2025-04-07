@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.post("/trips", authMiddleware, addTrip);
 router.get("/trips", authMiddleware, getUserTrips);
-router.put("/trips/:id", authMiddleware, updateTrip); // Новый маршрут для редактирования
-router.delete("/trips/:id", authMiddleware, deleteTrip); // Новый маршрут для удаления
+router.put("/trips/:id", authMiddleware, updateTrip);
+router.delete("/trips/:id", authMiddleware, deleteTrip);
 
 module.exports = router;

@@ -22,42 +22,50 @@ const RoutesPage = () => {
     });
     const token = localStorage.getItem("token");
 
-    // Функция для форматирования даты
+    console.log("RoutesPage rendered, token:", token);
+
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleString("ru-RU", {
-            weekday: "short",  // сокращенное название дня недели
-            year: "numeric",   // год
-            month: "numeric",  // месяц
-            day: "numeric",    // день
-            hour: "numeric",   // час
-            minute: "numeric", // минута
-            
+            weekday: "short",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
         });
     };
 
     useEffect(() => {
+        console.log("RoutesPage useEffect triggered, token:", token);
         if (!token) {
-            navigate("/login", { state: { from: "/routes" } });
+            console.log("No token, redirecting to /login");
+            navigate("/login");
             return;
         }
 
         const fetchTrips = async () => {
             try {
+                console.log("Fetching trips with token:", token);
                 const response = await fetch("http://localhost:5000/api/trips", {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    setTrips(data);
-                } else {
-                    toast.error("Ошибка при загрузке маршрутов");
+                console.log("Trips response status:", response.status);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Ошибка загрузки маршрутов: ${response.status} - ${errorText}`);
                 }
+                const data = await response.json();
+                console.log("Fetched trips data:", data);
+                console.log("Структура trips:", JSON.stringify(data, null, 2));
+                setTrips(data);
             } catch (error) {
-                toast.error("Ошибка сервера");
+                console.error("Ошибка при загрузке маршрутов:", error);
+                toast.error("Не удалось загрузить маршруты");
             }
         };
-
         fetchTrips();
     }, [token, navigate]);
 
@@ -68,7 +76,7 @@ const RoutesPage = () => {
             start_date: trip.start_date,
             end_date: trip.end_date,
             budget: trip.budget,
-            destinations: trip.destinations,
+            destinations: trip.destinations || [],
         });
     };
 
@@ -126,19 +134,13 @@ const RoutesPage = () => {
             if (response.ok) {
                 toast.success("Маршрут обновлен");
                 setTrips(trips.map((trip) => (trip.id === tripId ? { ...formData, id: tripId } : trip)));
-                setEditingTrip(null);
-                setFormData({
-                    title: "",
-                    start_date: "",
-                    end_date: "",
-                    budget: "",
-                    destinations: [],
-                });
+                handleCancelEdit();
             } else {
                 const errorData = await response.json();
                 toast.error(errorData.error || "Ошибка при обновлении маршрута");
             }
         } catch (error) {
+            console.error("Ошибка при обновлении:", error);
             toast.error("Ошибка сервера");
         }
     };
@@ -158,10 +160,12 @@ const RoutesPage = () => {
                 toast.error(errorData.error || "Ошибка при удалении маршрута");
             }
         } catch (error) {
+            console.error("Ошибка при удалении:", error);
             toast.error("Ошибка сервера");
         }
     };
 
+    console.log("Rendering RoutesPage, trips:", trips);
     return (
         <div className="routes-page">
             <div className="container">
@@ -312,7 +316,8 @@ const RoutesPage = () => {
                                     <div className="trip-details">
                                         <h3 className="trip-title">{trip.title}</h3>
                                         <p className="trip-dates">
-                                            <strong>Даты:</strong> {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
+                                            <strong>Даты:</strong> {formatDate(trip.start_date)} -{" "}
+                                            {formatDate(trip.end_date)}
                                         </p>
                                         <p className="trip-budget">
                                             <strong>Бюджет:</strong> {trip.budget} руб.
@@ -320,12 +325,17 @@ const RoutesPage = () => {
                                         <div className="trip-destinations">
                                             <strong>Точки:</strong>
                                             <ul>
-                                                {trip.destinations.map((dest) => (
-                                                    <li key={dest.id}>
-                                                        {dest.name} ({formatDate(dest.date)}) - Стоимость: {dest.cost} руб.
-                                                        {dest.notes && <span> - {dest.notes}</span>}
-                                                    </li>
-                                                ))}
+                                                {trip.destinations && trip.destinations.length > 0 ? (
+                                                    trip.destinations.map((dest) => (
+                                                        <li key={dest.id || Math.random()}>
+                                                            {dest.name} ({formatDate(dest.date)}) - Стоимость:{" "}
+                                                            {dest.cost} руб.
+                                                            {dest.notes && <span> - {dest.notes}</span>}
+                                                        </li>
+                                                    ))
+                                                ) : (
+                                                    <li>Нет пунктов назначения</li>
+                                                )}
                                             </ul>
                                         </div>
                                         <div className="trip-actions">

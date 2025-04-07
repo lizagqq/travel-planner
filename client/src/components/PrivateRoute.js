@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import React, { useState, useEffect } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 
-const PrivateRoute = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(null);
-    const location = useLocation();
+const PrivateRoute = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const token = localStorage.getItem("token");
+
+    console.log("PrivateRoute checking token:", token);
 
     useEffect(() => {
         const checkAuth = async () => {
-            const token = localStorage.getItem("token");
             if (!token) {
+                console.log("No token, not authenticated");
                 setIsAuthenticated(false);
+                setLoading(false);
                 return;
             }
 
@@ -20,33 +23,35 @@ const PrivateRoute = ({ children }) => {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-
+                console.log("Response status from /api/user/me:", response.status);
                 if (response.ok) {
                     setIsAuthenticated(true);
                 } else {
-                    localStorage.removeItem("token");
                     setIsAuthenticated(false);
-                    toast.error("Сессия истекла, пожалуйста, войдите снова");
                 }
             } catch (error) {
-                localStorage.removeItem("token");
+                console.error("Ошибка проверки авторизации:", error);
                 setIsAuthenticated(false);
-                toast.error("Ошибка сервера");
+            } finally {
+                setLoading(false);
             }
         };
-
         checkAuth();
-    }, []);
+    }, [token]);
 
-    if (isAuthenticated === null) {
+    if (loading) {
+        console.log("PrivateRoute: still loading");
         return <div>Загрузка...</div>;
     }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    console.log("PrivateRoute: rendering, isAuthenticated:", isAuthenticated);
+    if (isAuthenticated) {
+        console.log("Rendering Outlet with children");
+        return <Outlet />;
+    } else {
+        console.log("Redirecting to /login");
+        return <Navigate to="/login" />;
     }
-
-    return children;
 };
 
 export default PrivateRoute;

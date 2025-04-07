@@ -136,3 +136,8 @@
     font-size: 18px;
     color: #666;
 }
+
+.profile-container, .routes-page, .container {
+    display: block !important;
+    visibility: visible !important;
+}

@@ -3,6 +3,7 @@ const cors = require("cors");
 const userRoutes = require("./routes/users");
 const profileRoutes = require("./routes/profileRoutes");
 const predefinedTripRoutes = require("./routes/predefinedTripRoutes");
+const tripRoutes = require("./routes/tripRoutes"); // Добавляем
 require("dotenv").config();
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use("/api/user", userRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api", tripRoutes);           // /api/trips
 app.use("/api", predefinedTripRoutes);
 
 console.log("Зарегистрированные маршруты:");

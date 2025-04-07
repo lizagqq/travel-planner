@@ -57,8 +57,12 @@ const AddRoutePage = () => {
     const [editingDestination, setEditingDestination] = useState(null);
     const token = localStorage.getItem("token");
 
+    console.log("AddRoutePage rendered, token:", token); // Отладка
+
     useEffect(() => {
+        console.log("AddRoutePage useEffect triggered, token:", token); // Отладка
         if (!token) {
+            console.log("No token, redirecting to /login");
             navigate("/login", { state: { from: "/add-route" } });
         }
     }, [token, navigate]);
@@ -69,6 +73,7 @@ const AddRoutePage = () => {
     const isOverBudget = totalCost > budget && budget > 0;
 
     const handleAddDestination = () => {
+        console.log("handleAddDestination called, newDestination:", newDestination); // Отладка
         if (!newDestination.name || !newDestination.date || !newDestination.time || !newDestination.cost || !newDestination.category) {
             toast.error("Заполните все обязательные поля пункта назначения");
             return;
@@ -97,6 +102,7 @@ const AddRoutePage = () => {
     };
 
     const handleRemoveDestination = (index) => {
+        console.log("handleRemoveDestination called, index:", index); // Отладка
         setFormData({
             ...formData,
             destinations: formData.destinations.filter((_, i) => i !== index),
@@ -108,6 +114,7 @@ const AddRoutePage = () => {
     };
 
     const handleEditDestination = (index) => {
+        console.log("handleEditDestination called, index:", index); // Отладка
         const dest = formData.destinations[index];
         setEditingDestinationIndex(index);
         setEditingDestination({
@@ -118,6 +125,7 @@ const AddRoutePage = () => {
     };
 
     const handleUpdateDestination = () => {
+        console.log("handleUpdateDestination called, editingDestination:", editingDestination); // Отладка
         if (
             !editingDestination.name ||
             !editingDestination.date ||
@@ -155,12 +163,14 @@ const AddRoutePage = () => {
     };
 
     const handleCancelEdit = () => {
+        console.log("handleCancelEdit called"); // Отладка
         setEditingDestinationIndex(null);
         setEditingDestination(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log("handleSubmit called, formData:", formData); // Отладка
         if (!formData.title || !formData.start_date || !formData.end_date || !formData.budget) {
             toast.error("Заполните все поля маршрута");
             return;
@@ -183,7 +193,7 @@ const AddRoutePage = () => {
                 },
                 body: JSON.stringify(formData),
             });
-
+            console.log("Submit response status:", response.status); // Отладка
             if (response.ok) {
                 toast.success("Маршрут успешно добавлен!");
                 navigate("/routes");
@@ -192,10 +202,12 @@ const AddRoutePage = () => {
                 toast.error(errorData.error || "Ошибка при добавлении маршрута");
             }
         } catch (error) {
+            console.error("Ошибка при отправке:", error);
             toast.error("Ошибка сервера");
         }
     };
 
+    console.log("Rendering AddRoutePage, formData:", formData); // Отладка
     return (
         <div className="add-route-page">
             <div className="container">
@@ -307,7 +319,7 @@ const AddRoutePage = () => {
                         className="btn btn-secondary add-destination-btn"
                         onClick={handleAddDestination}
                     >
-                        Добавить 
+                        Добавить
                     </button>
 
                     {editingDestinationIndex !== null && editingDestination && (
@@ -416,14 +428,14 @@ const AddRoutePage = () => {
                                             </span>
                                             <div>
                                                 <button
-                                                    type="button" // Явно указываем type="button"
+                                                    type="button"
                                                     className="btn btn-secondary edit-destination-btn"
                                                     onClick={() => handleEditDestination(index)}
                                                 >
                                                     Редактировать
                                                 </button>
                                                 <button
-                                                    type="button" // Явно указываем type="button"
+                                                    type="button"
                                                     className="btn btn-danger remove-destination-btn"
                                                     onClick={() => handleRemoveDestination(index)}
                                                 >
