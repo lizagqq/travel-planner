@@ -31,12 +31,35 @@ const getUserTrips = async (req, res) => {
     try {
         const userId = req.user.id;
         console.log("Fetching trips for userId:", userId); // Отладка
-        const trips = await pool.query(
-            "SELECT id, title, start_date, end_date, budget FROM trips WHERE user_id = $1",
+
+        // Запрос для получения маршрутов и связанных пунктов назначения
+        const result = await pool.query(
+            `
+            SELECT 
+                t.id, 
+                t.title, 
+                t.start_date, 
+                t.end_date, 
+                t.budget,
+                json_agg(
+                    json_build_object(
+                        'id', d.id,
+                        'name', d.name,
+                        'date', d.date,
+                        'notes', d.notes,
+                        'cost', d.cost
+                    )
+                ) FILTER (WHERE d.id IS NOT NULL) AS destinations
+            FROM trips t
+            LEFT JOIN destinations d ON t.id = d.trip_id
+            WHERE t.user_id = $1
+            GROUP BY t.id, t.title, t.start_date, t.end_date, t.budget
+            `,
             [userId]
         );
-        console.log("Trips data sent:", trips.rows); // Отладка
-        res.json(trips.rows);
+
+        console.log("Trips data sent:", result.rows); // Отладка
+        res.json(result.rows);
     } catch (error) {
         console.error("Ошибка при получении поездок:", error);
         res.status(500).json({ error: "Ошибка сервера" });

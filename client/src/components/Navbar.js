@@ -74,7 +74,7 @@ const Navbar = () => {
                         </>
                     ) : (
                         <Link to="/login" className="navbar-link">
-                            Войти
+                            Создать свой маршрут!
                         </Link>
                     )}
                 </div>
